@@ -12,8 +12,8 @@ on:
 
 env:
   DOCKER_HOSTNAME: ghcr.io
-  TAG: latest
-
+  DOCKER_NAMESPACE: fybrik 
+  DOCKER_USERNAME: ${{ github.actor }}
 
 jobs:
   build:
@@ -22,10 +22,33 @@ jobs:
 
     steps:
     - uses: actions/checkout@v2
+    - name: 'Get Previous tag'
+      if: ${{ (github.event_name != 'pull_request') && !contains(github.ref, 'tags') }}
+      id: get-latest-tag
+      uses: actions-ecosystem/action-get-latest-tag@v1
+    - name: 'Get next patched version'
+      if: ${{ (github.event_name != 'pull_request') && !contains(github.ref, 'tags') }}
+      id: bump-semver
+      uses: actions-ecosystem/action-bump-semver@v1
+      with:
+        current_version: ${{ steps.get-latest-tag.outputs.tag }}
+        level: patch
+    - name: Set Dev Tags
+      if: ${{ (github.event_name != 'pull_request') && !contains(github.ref, 'tags') }}
+      # helm 3.7 chart tag must be semver
+      run: |
+        echo "HELM_TAG=${{ steps.bump-semver.outputs.new_version }}-SNAPSHOT" >> $GITHUB_ENV
+        echo "DOCKER_TAG=latest" >> $GITHUB_ENV
+    - name: New tag
+      if: ${{ (github.event_name != 'pull_request') && contains(github.ref, 'tags') }}
+      run: |
+        echo "DOCKER_TAG=${GITHUB_REF##*/v}" >> $GITHUB_ENV
+        echo "HELM_TAG=${GITHUB_REF##*/v}" >> $GITHUB_ENV
+
     - name: Helm tool installer
       uses: Azure/setup-helm@v1
       with:
-        version: v3.6.3
+        version: v3.7.1
     - name: Set up Python
       uses: actions/setup-python@v2
       with:
@@ -35,25 +58,21 @@ jobs:
         python -m pip install --upgrade pip
         pip install setuptools wheel twine
         pip install pipenv
-        
-    - name: New tag
-      if: ${{ (github.event_name != 'pull_request') && contains(github.ref, 'tags') }}
-      run: echo "TAG=${GITHUB_REF##*/v}" >> $GITHUB_ENV    
     - name: Build docker image 
-      run: export REPOSITORY=ghcr.io/fybrik/arrow-flight-module && make build
-    - name: Docker login
-      if: ${{ github.event_name != 'pull_request' }}
-      run: echo "${{ secrets.GITHUB_TOKEN }}" | docker login -u "fybrik" --password-stdin "${{ env.DOCKER_HOSTNAME }}"
+      run: make build
     - name: Docker push
       if: ${{ (github.event_name != 'pull_request') }}
-      run: export REPOSITORY=ghcr.io/fybrik/arrow-flight-module && make push
+      run: |
+        echo "${{ secrets.GITHUB_TOKEN }}" | docker login -u "${{ env.DOCKER_USERNAME }}" --password-stdin "${{ env.DOCKER_HOSTNAME }}"
+        make docker-push
     - id: version
       name: Infer version
       run: echo ::set-output name=version::${GITHUB_REF#refs/*/}
     - run: docker images
-    - name: Helm login
-      if: ${{ github.event_name != 'pull_request' }}
-      run: export HELM_EXPERIMENTAL_OCI=1 && echo "${{ secrets.GITHUB_TOKEN }}" | helm registry login -u "${{ github.actor }}" --password-stdin "${{ env.DOCKER_HOSTNAME }}"
     - name: Helm chart push
       if: ${{ (github.event_name != 'pull_request') }}
-      run: export HELM_REPOSITORY=ghcr.io/fybrik/arrow-flight-module-chart && make chart-push
+      run: |
+        export HELM_EXPERIMENTAL_OCI=1 
+        echo "${{ secrets.GITHUB_TOKEN }}" | helm registry login -u "${{ github.actor }}" --password-stdin "${{ env.DOCKER_HOSTNAME }}" 
+        make chart-push
+
