@@ -12,9 +12,8 @@ on:
 
 env:
   DOCKER_HOSTNAME: ghcr.io
-  DOCKER_NAMESPACE: fybrik
+  DOCKER_NAMESPACE: revit13 
   DOCKER_USERNAME: ${{ github.actor }}
-  DOCKER_TAG: latest
 
 jobs:
   build:
@@ -34,8 +33,18 @@ jobs:
       with:
         current_version: ${{ steps.get-latest-tag.outputs.tag }}
         level: patch
+    - name: Set Dev Tags
+      if: ${{ (github.event_name != 'pull_request') && !contains(github.ref, 'tags') }}
       # helm 3.7 chart tag must be semver
-      run: echo "HELM_TAG=${{ steps.bump-semver.outputs.new_version }}-SNAPSHOT" >> $GITHUB_ENV
+      run: |
+        echo "HELM_TAG=${{ steps.bump-semver.outputs.new_version }}-SNAPSHOT" >> $GITHUB_ENV
+        echo "DOCKER_TAG=latest" >> $GITHUB_ENV
+    - name: New tag
+      if: ${{ (github.event_name != 'pull_request') && contains(github.ref, 'tags') }}
+      run: |
+        echo "DOCKER_TAG=${GITHUB_REF##*/v}" >> $GITHUB_ENV
+        echo "HELM_TAG=${GITHUB_REF##*/v}" >> $GITHUB_ENV
+
     - name: Helm tool installer
       uses: Azure/setup-helm@v1
       with:
@@ -49,11 +58,6 @@ jobs:
         python -m pip install --upgrade pip
         pip install setuptools wheel twine
         pip install pipenv
-    - name: New tag
-      if: ${{ (github.event_name != 'pull_request') && contains(github.ref, 'tags') }}
-      run: |
-        echo "DOCKER_TAG=${GITHUB_REF##*/v}" >> $GITHUB_ENV    
-        echo "HELM_TAG=${GITHUB_REF##*/v}" >> $GITHUB_ENV
     - name: Build docker image 
       run: make build
     - name: Docker push
