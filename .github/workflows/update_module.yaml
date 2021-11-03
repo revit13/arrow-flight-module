@@ -14,7 +14,6 @@ env:
 
 jobs:
   update_module:
-    if: ${{ contains(github.ref, 'refs/heads/tags/') }}
     runs-on: ubuntu-latest
 
     steps:
