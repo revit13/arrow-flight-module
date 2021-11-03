@@ -1,0 +1,37 @@
+name: Build
+
+on:
+  push:
+    branches:
+      - master
+    tags:
+      - '*'
+
+env:
+  DOCKER_HOSTNAME: ghcr.io
+  DOCKER_NAMESPACE: revit13 
+  DOCKER_USERNAME: ${{ github.actor }}
+
+jobs:
+  update_module:
+    if: ${{ (contains(github.ref, 'tags') }}
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v2
+    - name: 'Get Previous tag'
+      if: ${{ (github.event_name != 'pull_request') && !contains(github.ref, 'tags') }}
+      id: get-latest-tag
+      uses: actions-ecosystem/action-get-latest-tag@v1
+    - name: 'Get next patched version'
+      id: bump-semver
+      uses: actions-ecosystem/action-bump-semver@v1
+      with:
+        current_version: ${{ steps.get-latest-tag.outputs.tag }}
+        level: patch
+    - name: Install yq
+      run: make ./hack/tools/bin/yq
+    - run: TAG=${{ steps.bump-semver.outputs.new_version }}-SNAPSHOT ./hack/prerelease.sh
+    - uses: EndBug/add-and-commit@v7
+      with:
+        default_author: github_actions
