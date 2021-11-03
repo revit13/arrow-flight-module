@@ -15,7 +15,7 @@ env:
 jobs:
   update_module:
     runs-on: ubuntu-latest
-    if: ${{ contains(github.ref, 'refs/heads/tags/') }}
+    if: ${{ contains(github.ref, 'tags') }}
 
     steps:
     - uses: actions/checkout@v2
