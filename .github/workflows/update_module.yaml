@@ -2,9 +2,8 @@ name: Build
 
 on:
   push:
-    tags:
-      - '*'
-
+    branches:
+      - releases
 env:
   DOCKER_HOSTNAME: ghcr.io
   DOCKER_NAMESPACE: revit13 
@@ -13,6 +12,7 @@ env:
 jobs:
   update_module:
     runs-on: ubuntu-latest
+    if: ${{ contains(github.ref, 'refs/heads/releases/') }}
     steps:
     - uses: actions/checkout@v2
     - name: 'Get Previous tag'
@@ -30,5 +30,4 @@ jobs:
     - uses: EndBug/add-and-commit@v7
       with:
         default_author: github_actions
-        branch: master1
         message: 'Update module.yaml with new chart tag'
