@@ -2,8 +2,6 @@ name: Build
 
 on:
   push:
-    branches:
-      - master
     tags:
       - '*'
 
@@ -15,8 +13,6 @@ env:
 jobs:
   update_module:
     runs-on: ubuntu-latest
-    if: ${{ contains(github.ref, 'tags') }}
-
     steps:
     - uses: actions/checkout@v2
     - name: 'Get Previous tag'
@@ -35,3 +31,4 @@ jobs:
       with:
         default_author: github_actions
         branch: master
+        message: 'Update module.yaml with new chart tag'
