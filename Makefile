@@ -1,3 +1,5 @@
+include Makefile.env
+
 REPOSITORY ?= helm/afm
 DOCKER_TAG ?= latest
 HELM_TAG ?= 0.0.0
@@ -50,4 +52,7 @@ deploy:
 .PHONY: clean
 clean:
 	helm uninstall afm || true
+
+
+include hack/make-rules/tools.mk
 
