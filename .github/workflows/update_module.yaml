@@ -20,7 +20,6 @@ jobs:
     steps:
     - uses: actions/checkout@v2
     - name: 'Get Previous tag'
-      if: ${{ (github.event_name != 'pull_request') && !contains(github.ref, 'tags') }}
       id: get-latest-tag
       uses: actions-ecosystem/action-get-latest-tag@v1
     - name: 'Get next patched version'
