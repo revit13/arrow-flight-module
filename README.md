@@ -151,4 +151,4 @@ A full list of deisred features (not necessarily fulfilled by AFM alone):
   - [ ] [dataset-lifecycle-framework](https://github.com/IBM/dataset-lifecycle-framework)
 - [ ] Demo
   - [ ] Flight client
-  - [ ] Apache Spark client
+    - [ ] Apache Spark client
