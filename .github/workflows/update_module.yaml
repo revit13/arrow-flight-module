@@ -23,7 +23,7 @@ jobs:
       uses: zwaldowski/semver-release-action@v1
       with:
         dry_run: true
-        bump: ${{ … }}
+        bump: patch 
         github_token: ${{ secrets.GITHUB_TOKEN }}
     - name: 'Get next patched version'
       id: bump-semver
