@@ -18,13 +18,17 @@ jobs:
       with:
         fetch-depth: 0
         token: ${{ secrets.TAG_PSAT }}
-    - name: 'Get Previous tag'
-      id: get-latest-tag
-      uses: actions-ecosystem/action-get-latest-tag@v1
+    - name: 'next_version'
+      id: next_version
+      uses: zwaldowski/semver-release-action@v1
+      with:
+        dry_run: true
+        bump: ${{ … }}
+        github_token: ${{ secrets.GITHUB_TOKEN }}
     - name: 'Get next patched version'
       id: bump-semver
       uses: actions-ecosystem/action-bump-semver@v1
       with:
-        current_version: ${{ steps.get-latest-tag.outputs.tag }}
+        current_version: ${{ steps.next_version.outputs.version }}
         level: patch
     - run: TAG=${{ steps.bump-semver.outputs.new_version }}-SNAPSHOT && echo $TAG
