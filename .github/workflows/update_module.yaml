@@ -25,10 +25,5 @@ jobs:
         dry_run: true
         bump: patch 
         github_token: ${{ secrets.GITHUB_TOKEN }}
-    - name: 'Get next patched version'
-      id: bump-semver
-      uses: actions-ecosystem/action-bump-semver@v1
-      with:
-        current_version: ${{ steps.next_version.outputs.version }}
-        level: patch
+    - run: echo "${{ steps.next_version.outputs.version }}"
     - run: TAG=${{ steps.bump-semver.outputs.new_version }}-SNAPSHOT && echo $TAG
