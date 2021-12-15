@@ -70,5 +70,5 @@ jobs:
       run: |
         export HELM_EXPERIMENTAL_OCI=1 
         echo "${{ secrets.GITHUB_TOKEN }}" | helm registry login -u "${{ github.actor }}" --password-stdin "${{ env.DOCKER_HOSTNAME }}" 
-        make chart-push
+        make helm-chart-push
 
