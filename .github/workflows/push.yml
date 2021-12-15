@@ -9,7 +9,7 @@ on:
 
 env:
   DOCKER_HOSTNAME: ghcr.io
-  DOCKER_NAMESPACE: fybrik 
+  DOCKER_NAMESPACE: revit13
   DOCKER_USERNAME: ${{ github.actor }}
 
 jobs:
