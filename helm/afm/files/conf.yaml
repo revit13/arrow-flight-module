@@ -2,6 +2,7 @@ app-uuid: {{ .Values.uuid | default "app-uuid-missing" }}
 {{ if .Values.assets -}}
 data:
 {{- range .Values.assets }}
+  {{- if .source }}
   - format: {{ .source.format }}
     name: {{ .assetID | quote }}
     capability: {{ .capability }}
@@ -68,6 +69,44 @@ data:
           {{- end }}
     {{- end }}
     {{- end }}
+  {{- end }}
+  {{- if .destination }}
+  - format: {{ .destination.format }}
+    name: {{ .assetID | quote }}
+    capability: {{ .capability }}
+    {{- if index .destination "connection" "fybrik-arrow-flight" }}
+    connection:
+      type: flight
+      flight:
+        endpoint_url: {{ index .destination "connection" "fybrik-arrow-flight" "hostname" }}
+        port: {{ index .destination "connection" "fybrik-arrow-flight" "port" }}
+        flight_command: "{ \"asset\": \"{{ .assetID }}\" }"
+    {{- end }}
+    {{- if .destination.connection.s3 }}
+    path: "{{ .destination.connection.s3.bucket }}/{{ .destination.connection.s3.object_key }}"
+    connection:
+      type: s3
+      s3:
+        endpoint_url: {{if not (contains "://" .destination.connection.s3.endpoint)}}https://{{end}}{{ .destination.connection.s3.endpoint }}
+        {{- range $k, $v := .destination.vault }}
+        {{- if eq $k "write" }}
+        vault_credentials:
+          {{- if $v.address }}
+          address: {{ $v.address }}
+          {{- end }}
+          {{- if $v.authPath }}
+          authPath: {{ $v.authPath }}
+          {{- end }}
+          {{- if $v.role }}
+          role: {{ $v.role }}
+          {{- end }}
+          {{- if $v.secretPath }}
+          secretPath: {{ $v.secretPath }}
+          {{- end }}
+          {{- end }}
+        {{- end }}
+    {{- end }}
+  {{- end }}
 {{- end -}}
 {{- else -}}
 data: []
