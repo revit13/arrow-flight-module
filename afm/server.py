@@ -7,6 +7,7 @@ import json
 from fybrik_python_logging import logger, init_logger, DataSetID, ForUser
 import os
 
+import datetime
 import pyarrow as pa
 import pyarrow.flight as fl
 import pyarrow.parquet as pq
@@ -60,9 +61,11 @@ class AFMFlightServer(fl.FlightServerBase):
         # in this implementation we currently begin by reading the entire dataset
         record_batches = reader.read_all().combine_chunks().to_batches()
         transformed_batches = transform_batches(asset.actions, record_batches)
-        # currently, write_dataset supports the parquet format, but not csv
-        ds.write_dataset(transformed_batches, base_dir=asset.path, format=asset.format,
-                         filesystem=asset.filesystem)
+        logger.trace("write_mode: ", asset.write_mode)
+        if asset.write_mode == "append":
+            ds.write_dataset(transformed_batches, base_dir=asset.path, basename_template="part-{:%Y-%m-%d-%H-%M-%S-%f}-{{i}}.parquet".format(datetime.datetime.now()), format=asset.format,  filesystem=asset.filesystem, existing_data_behavior='overwrite_or_ignore')
+        else:
+            ds.write_dataset(transformed_batches, base_dir=asset.path, basename_template="part-{:%Y-%m-%d-%H-%M-%S-%f}-{{i}}.parquet".format(datetime.datetime.now()), format=asset.format, filesystem=asset.filesystem, existing_data_behavior='delete_matching')
 
     def _read_asset(self, asset, columns=None):
         dataset, data_files = self._get_dataset(asset)
@@ -161,11 +164,19 @@ class AFMFlightServer(fl.FlightServerBase):
 
     def do_put(self, context, descriptor, reader, writer):
         asset_info = json.loads(descriptor.command)
+        logger.trace(asset_info)
         logger.info('writing dataset',
                     extra={DataSetID: asset_info['asset'],
                            ForUser: True})
+        # default write mode is overwrite
+        write_mode = "overwrite"
+        if "write_mode" in asset_info:
+           write_mode = asset_info['write_mode']
+        if write_mode not in ['append', 'overwrite']:
+           raise ValueError("Unsupported write mode type: {}".format(write_mode))
+
         with Config(self.config_path) as config:
-            asset = asset_from_config(config, asset_info['asset'], capability="write")
+            asset = asset_from_config(config, asset_info['asset'], capability="write", write_mode=write_mode)
             self._write_asset(asset, reader)
 
     def get_schema(self, context, descriptor):

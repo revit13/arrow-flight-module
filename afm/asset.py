@@ -12,21 +12,22 @@ from afm.flight.flight import flight_from_config
 
 from pyarrow.fs import LocalFileSystem
 
-def asset_from_config(config: Config, asset_name: str, partition_path=None, capability=""):
+def asset_from_config(config: Config, asset_name: str, partition_path=None, capability="", write_mode=""):
     connection_type = config.connection_type(asset_name, capability)
     if connection_type in ['s3', 'httpfs', 'localfs']:
-        return FileSystemAsset(config, asset_name, partition_path, capability)
+        return FileSystemAsset(config, asset_name, partition_path, capability, write_mode=write_mode)
     elif connection_type == 'flight':
-        return FlightAsset(config, asset_name, capability=capability)
+        return FlightAsset(config, asset_name, capability=capability, write_mode=write_mode)
     raise ValueError(
         "Unsupported connection type: {}".format(config.connection_type))
 
 class Asset:
-    def __init__(self, config: Config, asset_name: str, partition_path=None, capability=""):
+    def __init__(self, config: Config, asset_name: str, partition_path=None, capability="", write_mode=""):
         asset_config = config.for_asset(asset_name, capability=capability)
         self._config = asset_config
         self._actions = Asset._actions_for_asset(asset_config)
         self._format = asset_config.get("format")
+        self._write_mode = write_mode
         if partition_path:
             self._path = partition_path
         else:
@@ -56,6 +57,10 @@ class Asset:
     def connection_type(self):
         return self._config['connection']['type']
 
+    @property
+    def write_mode(self):
+        return self._write_mode
+
     @staticmethod
     def _actions_for_asset(asset_config: dict):
         def build_action(x):
@@ -71,7 +76,7 @@ class Asset:
         return consolidate_actions(actions)
 
 class FileSystemAsset(Asset):
-    def __init__(self, config: Config, asset_name: str, partition_path=None, capability=""):
+    def __init__(self, config: Config, asset_name: str, partition_path=None, capability="", write_mode=""):
         super().__init__(config, asset_name, partition_path, capability)
         self._filesystem = FileSystemAsset._filesystem_for_asset(self._config)
 
@@ -93,8 +98,8 @@ class FileSystemAsset(Asset):
         return self._filesystem
 
 class FlightAsset(Asset):
-    def __init__(self, config: Config, asset_name: str, capability=""):
-        super().__init__(config, asset_name, capability=capability)
+    def __init__(self, config: Config, asset_name: str, capability="", write_mode=""):
+        super().__init__(config, asset_name, capability=capability, write_mode=write_mode)
         self._flight = flight_from_config(self._config['connection']['flight'])
 
     @property
