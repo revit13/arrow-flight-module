@@ -26,7 +26,7 @@ class HttpBasicClientAuthHandler(fl.ClientAuthHandler):
 
 request = {
     "asset": "new-dataset", 
-    # write_mode can be append or override. The default is override.
+    # write_mode can be append or overwrite. The default is overwrite.
     # "write_mode": "append",
 }
 
