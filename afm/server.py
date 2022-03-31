@@ -61,10 +61,11 @@ class AFMFlightServer(fl.FlightServerBase):
         # in this implementation we currently begin by reading the entire dataset
         record_batches = reader.read_all().combine_chunks().to_batches()
         transformed_batches = transform_batches(asset.actions, record_batches)
-        logger.trace("write_mode: ", asset.write_mode)
         if asset.write_mode == "append":
+            logger.trace("write_mode: append")
             ds.write_dataset(transformed_batches, base_dir=asset.path, basename_template="part-{:%Y-%m-%d-%H-%M-%S-%f}-{{i}}.parquet".format(datetime.datetime.now()), format=asset.format,  filesystem=asset.filesystem, existing_data_behavior='overwrite_or_ignore')
         else:
+            logger.trace("write_mode: overwrite")
             ds.write_dataset(transformed_batches, base_dir=asset.path, basename_template="part-{:%Y-%m-%d-%H-%M-%S-%f}-{{i}}.parquet".format(datetime.datetime.now()), format=asset.format, filesystem=asset.filesystem, existing_data_behavior='delete_matching')
 
     def _read_asset(self, asset, columns=None):
@@ -169,12 +170,11 @@ class AFMFlightServer(fl.FlightServerBase):
                     extra={DataSetID: asset_info['asset'],
                            ForUser: True})
         # default write mode is overwrite
-        write_mode = "overwrite"
-        if "write_mode" in asset_info:
+        write_mode = 'overwrite'
+        if 'write_mode' in asset_info:
            write_mode = asset_info['write_mode']
         if write_mode not in ['append', 'overwrite']:
            raise ValueError("Unsupported write mode type: {}".format(write_mode))
-
         with Config(self.config_path) as config:
             asset = asset_from_config(config, asset_info['asset'], capability="write", write_mode=write_mode)
             self._write_asset(asset, reader)

@@ -15,7 +15,7 @@ from pyarrow.fs import LocalFileSystem
 def asset_from_config(config: Config, asset_name: str, partition_path=None, capability="", write_mode=""):
     connection_type = config.connection_type(asset_name, capability)
     if connection_type in ['s3', 'httpfs', 'localfs']:
-        return FileSystemAsset(config, asset_name, partition_path, capability, write_mode=write_mode)
+        return FileSystemAsset(config, asset_name, partition_path, capability, write_mode)
     elif connection_type == 'flight':
         return FlightAsset(config, asset_name, capability=capability, write_mode=write_mode)
     raise ValueError(
@@ -77,7 +77,7 @@ class Asset:
 
 class FileSystemAsset(Asset):
     def __init__(self, config: Config, asset_name: str, partition_path=None, capability="", write_mode=""):
-        super().__init__(config, asset_name, partition_path, capability)
+        super().__init__(config, asset_name, partition_path, capability, write_mode)
         self._filesystem = FileSystemAsset._filesystem_for_asset(self._config)
 
     @staticmethod
