@@ -129,6 +129,9 @@ ${TOOLBIN}/kubectl wait --for=condition=ready --all pod -n fybrik-notebook-sampl
 
 ${TOOLBIN}/kubectl port-forward svc/localstack 4566:4566 &
 
+echo "revit"
+pwd
+
 
 export ENDPOINT="http://127.0.0.1:4566"
 export BUCKET="demo"
