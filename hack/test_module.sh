@@ -3,6 +3,8 @@
 set -x
 set -e
 
+pwd
+git version
 
 export WORKING_DIR=test-script
 export ACCESS_KEY=1234
@@ -50,8 +52,6 @@ else
     exit 1
 fi
 
-pwd
-git version
 
 #quick start
 
