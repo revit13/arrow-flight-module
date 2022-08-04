@@ -4,7 +4,7 @@ set -x
 set -e
 
 pwd
-git version
+git tag
 
 export WORKING_DIR=test-script
 export ACCESS_KEY=1234
