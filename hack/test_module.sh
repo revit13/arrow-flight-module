@@ -50,6 +50,8 @@ else
     exit 1
 fi
 
+pwd
+git version
 
 #quick start
 
