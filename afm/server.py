@@ -113,6 +113,7 @@ class AFMFlightServer(fl.FlightServerBase):
                    ForUser: True})
 
         with Config(self.config_path) as config:
+            
             asset = asset_from_config(config, cmd.asset_name, capability="read")
             workers = workers_from_config(config.workers)
 

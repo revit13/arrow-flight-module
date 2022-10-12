@@ -1,6 +1,6 @@
 include Makefile.env
 
-DOCKER_TAG ?= 0.0.0
+DOCKER_TAG ?= 0.0.13
 
 DOCKER_NAME ?= arrow-flight-module
 

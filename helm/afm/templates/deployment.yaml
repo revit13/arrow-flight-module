@@ -41,6 +41,11 @@ spec:
           {{- .Values.containerSecurityContext | toYaml | nindent 12 }}
           resources:
             {{- toYaml .Values.resources | nindent 12 }}
+          env:
+            - name: DATA_DIR
+              value: {{ include "fybrik.getDataDir" . }}
+            - name: MIN_TLS_VERSION
+              value:  {{ .Values.tls.minVersion }}
           volumeMounts:
             - name: data
               mountPath: {{ include "fybrik.getDataDir" . }}
@@ -60,7 +65,7 @@ spec:
       volumes:
         - name: data
           emptyDir:
-            sizeLimit: {{ .Values.manager.dataDirSizeLimit }}
+            sizeLimit: {{ .Values.dataDirSizeLimit }}
         - name: config
           configMap:
             name: {{ include "arrow-flight-module.fullname" . }}

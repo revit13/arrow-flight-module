@@ -18,7 +18,7 @@ TEMP := /tmp
 CHART_LOCAL_PATH ?= helm/afm 
 CHART_NAME ?= arrow-flight-module-chart
 HELM_RELEASE ?= rel1-${DOCKER_NAME}
-HELM_TAG ?= 0.0.0
+HELM_TAG ?= 0.0.13
 
 CHART_REGISTRY_PATH := oci://${DOCKER_HOSTNAME}/${DOCKER_NAMESPACE}
 

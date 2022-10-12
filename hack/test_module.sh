@@ -9,10 +9,10 @@ export ACCESS_KEY=1234
 export SECRET_KEY=1234
 export TOOLBIN=tools/bin
 
-kubernetesVersion=$1
-fybrikVersion=$2
-moduleVersion=$3
-certManagerVersion=$4
+kubernetesVersion="kind21"
+fybrikVersion="kind21"
+moduleVersion=master
+certManagerVersion="1.6.2"
 
 # Trim the last two charts of the module version
 # to construct the module resource path
@@ -74,31 +74,22 @@ ${TOOLBIN}/helm install cert-manager jetstack/cert-manager \
     --set installCRDs=true \
     --wait --timeout 400s
 
-if [ $fybrikVersion == "master" ]
-then
-	rm -rf fybrik
-	git clone https://github.com/fybrik/fybrik.git
-	cd fybrik
-	../${TOOLBIN}/helm dependency update charts/vault
-	../${TOOLBIN}/helm install vault charts/vault --create-namespace -n fybrik-system \
-	    --set "vault.injector.enabled=false" \
-	    --set "vault.server.dev.enabled=true" \
-	    --values charts/vault/env/dev/vault-single-cluster-values.yaml
-	../${TOOLBIN}/kubectl wait --for=condition=ready --all pod -n fybrik-system --timeout=120s
-	../${TOOLBIN}/helm install fybrik-crd charts/fybrik-crd -n fybrik-system --wait
-	../${TOOLBIN}/helm install fybrik charts/fybrik --set global.tag=master -n fybrik-system --wait
-	cd -
-	rm -rf fybrik
-else
-	${TOOLBIN}/helm install vault fybrik-charts/vault --create-namespace -n fybrik-system \
-        --set "vault.injector.enabled=false" \
-        --set "vault.server.dev.enabled=true" \
-        --values https://raw.githubusercontent.com/fybrik/fybrik/v$fybrikVersion/charts/vault/env/dev/vault-single-cluster-values.yaml
-    ${TOOLBIN}/kubectl wait --for=condition=ready --all pod -n fybrik-system --timeout=400s
+cd /data/the-mesh-for-data/manager/testdata/notebook/read-flow-tls
+./setup-certs.sh
+cd -
 
-	${TOOLBIN}/helm install fybrik-crd fybrik-charts/fybrik-crd -n fybrik-system --version v$fybrikVersion --wait
-	${TOOLBIN}/helm install fybrik fybrik-charts/fybrik -n fybrik-system --version v$fybrikVersion --wait
-fi
+cd /data/the-mesh-for-data
+helm install vault charts/vault --create-namespace -n fybrik-system \
+    --set "vault.injector.enabled=false" \
+    --values  charts/vault/env/standalone/vault-single-cluster-values-tls.yaml
+kubectl wait --for=condition=ready --all pod -n fybrik-system --timeout=120s
+
+cd -
+helm install fybrik-crd fybrik-charts/fybrik-crd -n fybrik-system --version 1.1.0 --wait
+helm install fybrik fybrik-charts/fybrik -n fybrik-system --version 1.1.0  --wait
+
+CACERT=$(kubectl get secret test-tls-vault-certs -n fybrik-system -o jsonpath="{.data.ca\.crt}" | base64 -d)
+kubectl create secret generic ca-cert-secret --from-literal=ca.crt="$CACERT"  -n fybrik-blueprints
 
 # apply modules
 
@@ -217,10 +208,6 @@ then
 else
     RES=1
 fi
-
-pkill kubectl
-${TOOLBIN}/kubectl delete namespace fybrik-notebook-sample
-${TOOLBIN}/kubectl -n fybrik-system delete configmap sample-policy
 
 if [ ${RES} == 1 ]
 then
