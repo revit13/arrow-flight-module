@@ -17,10 +17,7 @@ test:
 .PHONY: build
 build:
 	pipenv requirements > requirements.txt
-	pipenv lock -r | sed -n '/^#/,$$p' > requirements1.txt
-	diff requirements1.txt requirements.txt 
-	cat requirements.txt
-#	docker build -f build/Dockerfile . -t ${IMG}
+	docker build -f build/Dockerfile . -t ${IMG}
 #	rm requirements.txt
 
 .PHONY: docker-push
