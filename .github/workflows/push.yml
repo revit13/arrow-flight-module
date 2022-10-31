@@ -24,47 +24,6 @@ jobs:
     # - Tags starting with v will be released as what comes after `v`. (e.g. refs/tags/v1.0 -> 1.0).
     # - Master branch will be released with `master` as version tag for the docker images and
     #   `0.0.0-master` tag for helm chart.
-    - id: version
-      name: Infer version
-      run: |
-        if [[ ${GITHUB_REF} == refs/tags/* ]] ;
-        then
-            version="${GITHUB_REF#refs/tags/v}"
-            echo "HELM_TAG=${version}" >> $GITHUB_ENV
-        elif  [[ ${GITHUB_REF} == refs/heads/master ]] ;
-        then
-            version=master
-            echo "HELM_TAG=0.0.0-master" >> $GITHUB_ENV
-        fi
-        echo ::set-output name=version::$version
-        echo "DOCKER_TAG=${version}" >> $GITHUB_ENV
-    - name: Helm tool installer
-      uses: Azure/setup-helm@v1
-      with:
-        version: v3.7.0
-    - name: Set up Python
-      uses: actions/setup-python@v3
-      with:
-        python-version: '3.x'
-    - name: Install dependencies
-      run: |
-        python -m pip install --upgrade pip
-        pip install setuptools wheel twine
-        pip install pipenv
     - name: Build docker image 
       run: make build
-    - name: Docker push
-      run: |
-        echo "${{ secrets.GITHUB_TOKEN }}" | docker login -u "${{ env.DOCKER_USERNAME }}" --password-stdin "${{ env.DOCKER_HOSTNAME }}"
-        make docker-push
-    - run: docker images
-    - name: Install yq
-      run: make ./hack/tools/bin/yq
-    - name: Update docker image tag in the chart value.yaml file
-      run: ./hack/tag_value.sh
-    - name: Helm chart push
-      run: |
-        export HELM_EXPERIMENTAL_OCI=1 
-        echo "${{ secrets.GITHUB_TOKEN }}" | helm registry login -u "${{ github.actor }}" --password-stdin "${{ env.DOCKER_HOSTNAME }}" 
-        make helm-chart-push
 

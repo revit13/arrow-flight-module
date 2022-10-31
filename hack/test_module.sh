@@ -9,10 +9,10 @@ export ACCESS_KEY=1234
 export SECRET_KEY=1234
 export TOOLBIN=tools/bin
 
-kubernetesVersion=$1
-fybrikVersion=$2
-moduleVersion=$3
-certManagerVersion=$4
+kubernetesVersion=kind22
+fybrikVersion=1.1.0
+moduleVersion=master
+certManagerVersion=1.6.2
 
 # Trim the last two charts of the module version
 # to construct the module resource path
