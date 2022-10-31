@@ -19,6 +19,19 @@ jobs:
 
     steps:
     - uses: actions/checkout@v3
+    - name: Helm tool installer
+      uses: Azure/setup-helm@v1
+      with:
+        version: v3.7.0
+    - name: Set up Python
+      uses: actions/setup-python@v3
+      with:
+        python-version: '3.x'
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install setuptools wheel twine
+        pip install pipenv
     # Versions are created as follows (In helm 3.7 and above OCI reference tags
     # must be valid SemVer):
     # - Tags starting with v will be released as what comes after `v`. (e.g. refs/tags/v1.0 -> 1.0).
